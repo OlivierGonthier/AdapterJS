@@ -1,4 +1,4 @@
-/*! adapterjs - v0.15.0 - 2018-08-01 */
+/*! adapterjs - v0.15.1 - 2018-08-01 */
 
 // Adapter's interface.
 var AdapterJS = AdapterJS || {};
@@ -18,7 +18,7 @@ AdapterJS.options.hidePluginInstallPrompt = !!AdapterJS.options.hidePluginInstal
 AdapterJS.options.forceSafariPlugin = !!AdapterJS.options.forceSafariPlugin;
 
 // AdapterJS version
-AdapterJS.VERSION = '0.15.0';
+AdapterJS.VERSION = '0.15.1';
 
 // This function will be called when the WebRTC API is ready to be used
 // Whether it is the native implementation (Chrome, Firefox, Opera) or
