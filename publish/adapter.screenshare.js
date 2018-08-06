@@ -1,4 +1,4 @@
-/*! adapterjs - v0.15.1 - 2018-08-01 */
+/*! adapterjs - v0.15.1 - 2018-08-06 */
 
 // Adapter's interface.
 var AdapterJS = AdapterJS || {};
@@ -2619,7 +2619,7 @@ SDPUtils.writeCandidate = function(candidate) {
 // a=ice-options:foo bar
 SDPUtils.parseIceOptions = function(line) {
   return line.substr(14).split(' ');
-}
+};
 
 // Parses an rtpmap line, returns RTCRtpCoddecParameters. Sample input:
 // a=rtpmap:111 opus/48000/2
@@ -2752,6 +2752,16 @@ SDPUtils.parseSsrcMedia = function(line) {
   return parts;
 };
 
+SDPUtils.parseSsrcGroup = function(line) {
+  var parts = line.substr(13).split(' ');
+  return {
+    semantics: parts.shift(),
+    ssrcs: parts.map(function(ssrc) {
+      return parseInt(ssrc, 10);
+    })
+  };
+};
+
 // Extracts the MID (RFC 5888) from a media section.
 // returns the MID or undefined if no mid line was found.
 SDPUtils.getMid = function(mediaSection) {
@@ -2759,7 +2769,7 @@ SDPUtils.getMid = function(mediaSection) {
   if (mid) {
     return mid.substr(6);
   }
-}
+};
 
 SDPUtils.parseFingerprint = function(line) {
   var parts = line.substr(14).split(' ');
@@ -2936,7 +2946,7 @@ SDPUtils.parseRtpEncodingParameters = function(mediaSection) {
     if (codec.name.toUpperCase() === 'RTX' && codec.parameters.apt) {
       var encParam = {
         ssrc: primarySsrc,
-        codecPayloadType: parseInt(codec.parameters.apt, 10),
+        codecPayloadType: parseInt(codec.parameters.apt, 10)
       };
       if (primarySsrc && secondarySsrc) {
         encParam.rtx = {ssrc: secondarySsrc};
@@ -2981,8 +2991,7 @@ SDPUtils.parseRtpEncodingParameters = function(mediaSection) {
 SDPUtils.parseRtcpParameters = function(mediaSection) {
   var rtcpParameters = {};
 
-  var cname;
-  // Gets the first SSRC. Note that with RTX there might be multiple
+  // Gets the first SSRC. Note tha with RTX there might be multiple
   // SSRCs.
   var remoteSsrc = SDPUtils.matchPrefix(mediaSection, 'a=ssrc:')
       .map(function(line) {
@@ -3023,8 +3032,8 @@ SDPUtils.parseMsid = function(mediaSection) {
   .map(function(line) {
     return SDPUtils.parseSsrcMedia(line);
   })
-  .filter(function(parts) {
-    return parts.attribute === 'msid';
+  .filter(function(msidParts) {
+    return msidParts.attribute === 'msid';
   });
   if (planB.length > 0) {
     parts = planB[0].value.split(' ');
@@ -3054,7 +3063,8 @@ SDPUtils.writeSessionBoilerplate = function(sessId, sessVer) {
   }
   // FIXME: sess-id should be an NTP timestamp.
   return 'v=0\r\n' +
-      'o=thisisadapterortc ' + sessionId + ' ' + version + ' IN IP4 127.0.0.1\r\n' +
+      'o=thisisadapterortc ' + sessionId + ' ' + version +
+        ' IN IP4 127.0.0.1\r\n' +
       's=-\r\n' +
       't=0 0\r\n';
 };
@@ -3164,9 +3174,24 @@ SDPUtils.parseOLine = function(mediaSection) {
     sessionVersion: parseInt(parts[2], 10),
     netType: parts[3],
     addressType: parts[4],
-    address: parts[5],
+    address: parts[5]
   };
-}
+};
+
+// a very naive interpretation of a valid SDP.
+SDPUtils.isValidSDP = function(blob) {
+  if (typeof blob !== 'string' || blob.length === 0) {
+    return false;
+  }
+  var lines = SDPUtils.splitLines(blob);
+  for (var i = 0; i < lines.length; i++) {
+    if (lines[i].length < 2 || lines[i].charAt(1) !== '=') {
+      return false;
+    }
+    // TODO: check the modifier a bit more.
+  }
+  return true;
+};
 
 // Expose public methods.
 if (typeof module === 'object') {
@@ -3327,12 +3352,12 @@ module.exports = function(dependencies, opts) {
       commonShim.shimCreateObjectURL(window);
 
       safariShim.shimRTCIceServerUrls(window);
+      safariShim.shimCreateOfferLegacy(window);
       safariShim.shimCallbacksAPI(window);
       safariShim.shimLocalStreamsAPI(window);
       safariShim.shimRemoteStreamsAPI(window);
       safariShim.shimTrackEventTransceiver(window);
       safariShim.shimGetUserMedia(window);
-      safariShim.shimCreateOfferLegacy(window);
 
       commonShim.shimRTCIceCandidate(window);
       commonShim.shimMaxMessageSize(window);
